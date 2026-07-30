@@ -1,0 +1,30 @@
+{
+  "name": "clouddfs-monorepo",
+  "private": true,
+  "version": "1.0.0",
+  "description": "CloudDFS - A Fault-Tolerant Distributed File Storage System",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:coordinator\" \"npm run dev:server-1\" \"npm run dev:server-2\" \"npm run dev:web\"",
+    "dev:coordinator": "npm run --workspace=apps/server dev:coordinator",
+    "dev:server-1": "npm run --workspace=apps/server dev:node-1",
+    "dev:server-2": "npm run --workspace=apps/server dev:node-2",
+    "dev:web": "npm run --workspace=apps/web dev",
+    "build": "npm run build --workspace=packages/shared && npm run build --workspace=packages/storage && npm run build --workspace=packages/database && npm run build --workspace=apps/server",
+    "db:generate": "npm run --workspace=packages/database generate",
+    "db:push": "npm run --workspace=packages/database push",
+    "db:seed": "npm run --workspace=packages/database seed",
+    "docker:up": "docker-compose up --build",
+    "docker:down": "docker-compose down"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

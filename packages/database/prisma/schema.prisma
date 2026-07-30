@@ -1,0 +1,78 @@
+datasource db {
+  provider = "sqlite"
+}
+
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "library"
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         String   @default("USER") // ADMIN, USER
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model File {
+  id                String   @id @default(uuid())
+  name              String
+  path              String   @default("/")
+  mimeType          String   @default("application/octet-stream")
+  sizeBytes         Int      @default(0)
+  totalChunks       Int      @default(0)
+  isFolder          Boolean  @default(false)
+  parentFolderId    String?
+  replicationFactor Int      @default(2)
+  status            String   @default("READY") // UPLOADING, READY, UNDER_REPLICATED, DELETED
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  parent   File?   @relation("FolderHierarchy", fields: [parentFolderId], references: [id], onDelete: Cascade)
+  children File[]  @relation("FolderHierarchy")
+  chunks   Chunk[]
+}
+
+model Chunk {
+  id                String   @id @default(uuid())
+  fileId            String
+  chunkIndex        Int
+  sizeBytes         Int
+  checksum          String
+  primaryNodeId     String
+  replicaNodeId     String?
+  storageKeyPrimary String
+  storageKeyReplica String?
+  status            String   @default("STORED") // PENDING, STORED, MISSING
+  createdAt         DateTime @default(now())
+
+  file File @relation(fields: [fileId], references: [id], onDelete: Cascade)
+}
+
+model Node {
+  id                String   @id
+  name              String
+  address           String
+  port              Int
+  status            String   @default("ACTIVE") // ACTIVE, UNHEALTHY, DEAD
+  totalStorageBytes BigInt   @default(107374182400) // 100 GB default
+  usedStorageBytes  BigInt   @default(0)
+  activeUploads     Int      @default(0)
+  activeDownloads   Int      @default(0)
+  cpuUsagePct       Float    @default(0.0)
+  memoryUsagePct    Float    @default(0.0)
+  lastHeartbeat     DateTime @default(now())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  eventType String // NODE_FAILOVER, CHUNK_REPAIR, FILE_UPLOAD, FILE_DELETE
+  message   String
+  details   String?
+  createdAt DateTime @default(now())
+}

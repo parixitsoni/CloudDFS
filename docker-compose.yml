@@ -1,0 +1,62 @@
+version: "3.8"
+
+services:
+  # Metadata Control Plane Coordinator
+  coordinator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: npm run dev:coordinator
+    ports:
+      - "4000:4000"
+    environment:
+      - PORT=4000
+      - ROLE=COORDINATOR
+      - DATABASE_URL=file:/app/dev.db
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+  # Data Node Instance 1
+  node-1:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: npm run dev:server-1
+    ports:
+      - "4001:4001"
+    environment:
+      - PORT=4001
+      - ROLE=DATA_NODE
+      - NODE_ID=node-us-east-1
+      - COORDINATOR_URL=http://coordinator:4000
+    depends_on:
+      - coordinator
+
+  # Data Node Instance 2
+  node-2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: npm run dev:server-2
+    ports:
+      - "4002:4002"
+    environment:
+      - PORT=4002
+      - ROLE=DATA_NODE
+      - NODE_ID=node-eu-west-1
+      - COORDINATOR_URL=http://coordinator:4000
+    depends_on:
+      - coordinator
+
+  # Next.js Web Explorer & Dashboard
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:4000
+    depends_on:
+      - coordinator

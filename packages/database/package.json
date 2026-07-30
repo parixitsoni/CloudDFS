@@ -1,0 +1,23 @@
+{
+  "name": "@clouddfs/database",
+  "version": "1.0.0",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "generate": "prisma generate",
+    "push": "prisma db push",
+    "seed": "node dist/seed.js"
+  },
+  "dependencies": {
+    "@clouddfs/shared": "1.0.0",
+    "@prisma/adapter-better-sqlite3": "^7.3.0",
+    "@prisma/client": "^7.3.0",
+    "better-sqlite3": "^13.0.2",
+    "prisma": "^7.3.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}
