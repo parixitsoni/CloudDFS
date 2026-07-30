@@ -37,14 +37,63 @@ const storageProvider = new CloudStorageProvider();
 const chunkManager = new ChunkManager();
 let heartbeatMonitor: HeartbeatMonitor | null = null;
 
+// Ensure initial demo nodes exist if cluster table is empty
+async function ensureInitialNodesExist() {
+  try {
+    const count = await db.node.count();
+    if (count === 0) {
+      console.log("[Cluster] Seeding initial data nodes...");
+      const demoNodes = [
+        {
+          id: "node-us-east-1",
+          name: "Data Node 1 (US-East)",
+          address: "http://localhost:4001",
+          port: 4001,
+          status: NodeStatus.ACTIVE,
+          totalStorageBytes: BigInt(100 * 1024 * 1024 * 1024),
+          usedStorageBytes: BigInt(10 * 1024 * 1024 * 1024),
+          activeUploads: 0,
+          activeDownloads: 0,
+          cpuUsagePct: 12.0,
+          memoryUsagePct: 35.0,
+          lastHeartbeat: new Date(),
+        },
+        {
+          id: "node-eu-west-1",
+          name: "Data Node 2 (EU-West)",
+          address: "http://localhost:4002",
+          port: 4002,
+          status: NodeStatus.ACTIVE,
+          totalStorageBytes: BigInt(100 * 1024 * 1024 * 1024),
+          usedStorageBytes: BigInt(8 * 1024 * 1024 * 1024),
+          activeUploads: 0,
+          activeDownloads: 0,
+          cpuUsagePct: 8.5,
+          memoryUsagePct: 28.0,
+          lastHeartbeat: new Date(),
+        },
+      ];
+
+      for (const n of demoNodes) {
+        await db.node.create({ data: n });
+      }
+    }
+  } catch (err) {
+    console.error("[Cluster] Node auto-seed error:", err);
+  }
+}
+
 // Initialize background health checker on Coordinator
 if (SERVER_ROLE === "COORDINATOR" || SERVER_ROLE === "HYBRID") {
-  heartbeatMonitor = new HeartbeatMonitor(HEARTBEAT_INTERVAL_MS);
-  heartbeatMonitor.start();
+  ensureInitialNodesExist().then(() => {
+    heartbeatMonitor = new HeartbeatMonitor(HEARTBEAT_INTERVAL_MS);
+    heartbeatMonitor.start();
+  });
 
   // Periodically keep demo data node heartbeats fresh for cloud deployment
   setInterval(async () => {
     try {
+      await ensureInitialNodesExist();
       await db.node.updateMany({
         where: { status: { not: "DEAD" } },
         data: { lastHeartbeat: new Date() },
