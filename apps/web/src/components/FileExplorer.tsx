@@ -15,8 +15,10 @@ import {
   ChevronRight,
   Layers,
   ShieldAlert,
-  X,
 } from "lucide-react";
+import { useToast } from "@/components/Toast";
+import { CreateFolderModal } from "@/components/CreateFolderModal";
+import { ConfirmModal } from "@/components/ConfirmModal";
 
 interface FileItem {
   id: string;
@@ -33,6 +35,8 @@ interface FileItem {
 }
 
 export const FileExplorer: React.FC = () => {
+  const { showToast } = useToast();
+
   const [files, setFiles] = useState<FileItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
@@ -43,8 +47,11 @@ export const FileExplorer: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStatusText, setUploadStatusText] = useState("");
-  const [newFolderName, setNewFolderName] = useState("");
+  
+  // Modal states
   const [showFolderModal, setShowFolderModal] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<FileItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
 
@@ -61,6 +68,7 @@ export const FileExplorer: React.FC = () => {
       }
     } catch (err) {
       console.error("Failed to fetch files:", err);
+      showToast("error", "Failed to connect to storage cluster.");
     } finally {
       setLoading(false);
     }
@@ -70,27 +78,23 @@ export const FileExplorer: React.FC = () => {
     fetchFiles(currentFolderId);
   }, [currentFolderId]);
 
-  const handleCreateFolder = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newFolderName.trim()) return;
+  const handleCreateFolderSubmit = async (folderName: string) => {
+    const res = await fetch(`${API_BASE}/api/files/folder`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: folderName,
+        parentFolderId: currentFolderId,
+      }),
+    });
 
-    try {
-      const res = await fetch(`${API_BASE}/api/files/folder`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: newFolderName.trim(),
-          parentFolderId: currentFolderId,
-        }),
-      });
-      if (res.ok) {
-        setNewFolderName("");
-        setShowFolderModal(false);
-        fetchFiles();
-      }
-    } catch (err) {
-      console.error("Create folder failed:", err);
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.error || "Failed to create folder");
     }
+
+    showToast("success", `Folder "${folderName}" created successfully!`);
+    fetchFiles();
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -115,7 +119,8 @@ export const FileExplorer: React.FC = () => {
       });
 
       if (!initRes.ok) {
-        throw new Error("Failed to initiate upload");
+        const errJson = await initRes.json().catch(() => ({}));
+        throw new Error(errJson.error || "Failed to initiate upload");
       }
 
       const initData = await initRes.json();
@@ -146,46 +151,69 @@ export const FileExplorer: React.FC = () => {
         });
 
         if (!chunkRes.ok) {
-          throw new Error(`Chunk ${i} upload failed`);
+          throw new Error(`Chunk ${i + 1} upload failed`);
         }
 
         setUploadProgress(Math.round(((i + 1) / totalChunks) * 100));
       }
 
       setUploadStatusText("Finalizing metadata...");
+      showToast("success", `File "${selectedFile.name}" uploaded successfully!`);
       setTimeout(() => {
         setIsUploading(false);
         fetchFiles();
-      }, 800);
+      }, 600);
     } catch (err) {
       console.error("File upload error:", err);
-      setUploadStatusText(`Upload error: ${(err as Error).message}`);
+      const msg = (err as Error).message || "Upload failed";
+      setUploadStatusText(`Upload error: ${msg}`);
+      showToast("error", msg);
       setTimeout(() => setIsUploading(false), 3000);
+    } finally {
+      // Clear input value so same file can be uploaded again
+      e.target.value = "";
     }
   };
 
   const handleDownload = (file: FileItem) => {
+    showToast("info", `Downloading "${file.name}"...`);
     window.open(`${API_BASE}/api/files/${file.id}/download`, "_blank");
   };
 
-  const handleDelete = async (file: FileItem) => {
-    if (!confirm(`Are you sure you want to delete "${file.name}"?`)) return;
+  const confirmDelete = (file: FileItem) => {
+    setItemToDelete(file);
+  };
+
+  const executeDelete = async () => {
+    if (!itemToDelete) return;
+    setIsDeleting(true);
     try {
-      const res = await fetch(`${API_BASE}/api/files/${file.id}`, {
+      const res = await fetch(`${API_BASE}/api/files/${itemToDelete.id}`, {
         method: "DELETE",
       });
       if (res.ok) {
+        showToast("success", `Successfully deleted "${itemToDelete.name}"`);
         fetchFiles();
+      } else {
+        throw new Error("Failed to delete item");
       }
     } catch (err) {
       console.error("Failed to delete file:", err);
+      showToast("error", `Error deleting "${itemToDelete.name}"`);
+    } finally {
+      setIsDeleting(false);
+      setItemToDelete(null);
     }
   };
 
   const handleShare = (file: FileItem) => {
     const link = `${API_BASE}/api/files/${file.id}/download`;
-    navigator.clipboard.writeText(link);
-    alert(`Share link copied:\n${link}`);
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(link);
+      showToast("success", "Share link copied to clipboard!");
+    } else {
+      showToast("info", `Share Link: ${link}`);
+    }
   };
 
   const navigateToFolder = (folder: FileItem) => {
@@ -234,9 +262,9 @@ export const FileExplorer: React.FC = () => {
           ))}
         </div>
 
-        {/* Mobile Toolbar Layout (Stacked 3 Rows on < 640px) */}
+        {/* Mobile / Desktop Controls Layout */}
         <div className="space-y-2 sm:space-y-0 sm:flex sm:items-center sm:gap-2">
-          {/* Search Box - Full Width on Mobile */}
+          {/* Search Box */}
           <div className="relative w-full sm:w-56">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
@@ -248,7 +276,7 @@ export const FileExplorer: React.FC = () => {
             />
           </div>
 
-          {/* Mobile Buttons Row (Upload, New Folder, Refresh) */}
+          {/* Action Buttons */}
           <div className="flex items-center gap-2">
             <label className="min-btn-primary py-2 px-3 text-xs sm:text-sm cursor-pointer flex-1 justify-center sm:flex-none">
               <Upload className="w-4 h-4" />
@@ -332,7 +360,7 @@ export const FileExplorer: React.FC = () => {
                         Healthy
                       </span>
                       <button
-                        onClick={() => handleDelete(file)}
+                        onClick={() => confirmDelete(file)}
                         className="p-1.5 rounded bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition-colors"
                         title="Delete Folder"
                       >
@@ -402,7 +430,7 @@ export const FileExplorer: React.FC = () => {
                         <Share2 className="w-3.5 h-3.5" /> Share
                       </button>
                       <button
-                        onClick={() => handleDelete(file)}
+                        onClick={() => confirmDelete(file)}
                         className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-medium border border-rose-200 flex items-center justify-center shrink-0"
                         title="Delete"
                       >
@@ -519,7 +547,7 @@ export const FileExplorer: React.FC = () => {
                             </>
                           )}
                           <button
-                            onClick={() => handleDelete(file)}
+                            onClick={() => confirmDelete(file)}
                             className="p-1.5 rounded bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition-colors"
                             title="Delete"
                           >
@@ -536,44 +564,23 @@ export const FileExplorer: React.FC = () => {
         </>
       )}
 
-      {/* New Folder Modal */}
-      {showFolderModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
-          <div className="white-panel max-w-sm w-full p-5 space-y-4 shadow-xl">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="text-base font-semibold text-slate-900">Create New Folder</h3>
-              <button
-                onClick={() => setShowFolderModal(false)}
-                className="text-slate-400 hover:text-slate-700"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <form onSubmit={handleCreateFolder} className="space-y-4">
-              <input
-                type="text"
-                placeholder="Folder Name"
-                value={newFolderName}
-                onChange={(e) => setNewFolderName(e.target.value)}
-                autoFocus
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2 text-sm text-slate-900 focus:outline-none focus:border-slate-400"
-              />
-              <div className="flex justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowFolderModal(false)}
-                  className="min-btn-secondary"
-                >
-                  Cancel
-                </button>
-                <button type="submit" className="min-btn-primary">
-                  Create
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* Create Folder Modal Component */}
+      <CreateFolderModal
+        isOpen={showFolderModal}
+        onClose={() => setShowFolderModal(false)}
+        onSubmit={handleCreateFolderSubmit}
+      />
+
+      {/* Delete Confirmation Modal Component */}
+      <ConfirmModal
+        isOpen={!!itemToDelete}
+        title={itemToDelete?.isFolder ? "Delete Folder" : "Delete File"}
+        message={`Are you sure you want to delete "${itemToDelete?.name}"? All associated data chunks will be removed.`}
+        confirmText="Delete"
+        onConfirm={executeDelete}
+        onClose={() => setItemToDelete(null)}
+        isLoading={isDeleting}
+      />
     </div>
   );
 };
