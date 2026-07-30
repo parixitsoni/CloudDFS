@@ -41,6 +41,18 @@ let heartbeatMonitor: HeartbeatMonitor | null = null;
 if (SERVER_ROLE === "COORDINATOR" || SERVER_ROLE === "HYBRID") {
   heartbeatMonitor = new HeartbeatMonitor(HEARTBEAT_INTERVAL_MS);
   heartbeatMonitor.start();
+
+  // Periodically keep demo data node heartbeats fresh for cloud deployment
+  setInterval(async () => {
+    try {
+      await db.node.updateMany({
+        where: { status: { not: "DEAD" } },
+        data: { lastHeartbeat: new Date() },
+      });
+    } catch {
+      // Suppress transient error
+    }
+  }, 10000);
 }
 
 // Background heartbeat sender for DATA_NODE

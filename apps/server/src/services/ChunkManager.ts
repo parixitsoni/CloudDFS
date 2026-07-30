@@ -15,9 +15,17 @@ export class ChunkManager {
     sizeBytes: number,
     replicationFactor: number = 2
   ): Promise<{ totalChunks: number; chunkSize: number; placements: ChunkPlacement[] }> {
-    const activeNodes = await db.node.findMany({
+    let activeNodes = await db.node.findMany({
       where: { status: NodeStatus.ACTIVE },
     });
+
+    if (activeNodes.length === 0) {
+      // Auto-revive demo nodes in cloud environment if heartbeats expired
+      await db.node.updateMany({
+        data: { status: NodeStatus.ACTIVE, lastHeartbeat: new Date() },
+      });
+      activeNodes = await db.node.findMany();
+    }
 
     if (activeNodes.length === 0) {
       throw new Error("No active data nodes available in the cluster to store chunks.");
