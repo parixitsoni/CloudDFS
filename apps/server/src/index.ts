@@ -43,11 +43,12 @@ async function ensureInitialNodesExist() {
     const count = await db.node.count();
     if (count === 0) {
       console.log("[Cluster] Seeding initial data nodes...");
+      const liveAddress = process.env.RENDER_EXTERNAL_URL || "http://localhost:4000";
       const demoNodes = [
         {
           id: "node-us-east-1",
           name: "Data Node 1 (US-East)",
-          address: "http://localhost:4001",
+          address: liveAddress,
           port: 4001,
           status: NodeStatus.ACTIVE,
           totalStorageBytes: BigInt(100 * 1024 * 1024 * 1024),
@@ -61,7 +62,7 @@ async function ensureInitialNodesExist() {
         {
           id: "node-eu-west-1",
           name: "Data Node 2 (EU-West)",
-          address: "http://localhost:4002",
+          address: liveAddress,
           port: 4002,
           status: NodeStatus.ACTIVE,
           totalStorageBytes: BigInt(100 * 1024 * 1024 * 1024),
