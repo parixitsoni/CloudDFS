@@ -4,7 +4,7 @@ services:
     name: clouddfs-coordinator
     env: node
     buildCommand: npm install && npm run build
-    startCommand: node --loader ts-node/esm apps/server/src/index.ts --role=COORDINATOR --port=10000
+    startCommand: npm run db:push && npm run db:seed && node --loader ts-node/esm apps/server/src/index.ts --role=COORDINATOR --port=10000
     envVars:
       - key: NODE_VERSION
         value: 22.12.0
