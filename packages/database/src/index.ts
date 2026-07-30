@@ -5,12 +5,8 @@ import fs from "fs";
 
 let dbPath = path.resolve(__dirname, "../dev.db");
 
-if (process.env.DATABASE_URL) {
-  if (process.env.DATABASE_URL.startsWith("file:")) {
-    dbPath = process.env.DATABASE_URL.replace(/^file:/, "");
-  } else if (!process.env.DATABASE_URL.startsWith("postgres")) {
-    dbPath = process.env.DATABASE_URL;
-  }
+if (process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith("file:")) {
+  dbPath = process.env.DATABASE_URL.replace(/^file:/, "");
 }
 
 // Ensure the directory exists before initializing SQLite
