@@ -3,19 +3,26 @@ import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import path from "path";
 import fs from "fs";
 
-let dbPath = path.resolve(__dirname, "../dev.db");
+let dbInstance: PrismaClient;
 
-if (process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith("file:")) {
-  dbPath = process.env.DATABASE_URL.replace(/^file:/, "");
+const connectionUrl = process.env.DATABASE_URL || "file:./dev.db";
+
+if (connectionUrl.startsWith("file:")) {
+  let dbPath = connectionUrl.replace(/^file:/, "");
+  if (!path.isAbsolute(dbPath)) {
+    dbPath = path.resolve(__dirname, "..", dbPath);
+  }
+  const dbDir = path.dirname(dbPath);
+  if (!fs.existsSync(dbDir)) {
+    fs.mkdirSync(dbDir, { recursive: true });
+  }
+  const adapter = new PrismaBetterSqlite3({ url: dbPath });
+  dbInstance = new PrismaClient({ adapter });
+} else {
+  // Direct connection for live remote database (e.g. PostgreSQL)
+  dbInstance = new PrismaClient();
 }
 
-// Ensure the directory exists before initializing SQLite
-const dbDir = path.dirname(dbPath);
-if (!fs.existsSync(dbDir)) {
-  fs.mkdirSync(dbDir, { recursive: true });
-}
-
-const adapter = new PrismaBetterSqlite3({ url: dbPath });
-
-export const db = new PrismaClient({ adapter });
+export const db = dbInstance;
 export * from "@prisma/client";
+
