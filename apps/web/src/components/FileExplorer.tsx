@@ -28,6 +28,7 @@ interface FileItem {
   mimeType: string;
   sizeBytes: number;
   totalChunks: number;
+  totalItems?: number;
   isFolder: boolean;
   parentFolderId: string | null;
   replicationFactor: number;
@@ -493,13 +494,16 @@ export const FileExplorer: React.FC = () => {
                         )}
                       </td>
 
-                      <td className="px-4 py-3.5 text-slate-500 text-xs">
-                        {file.isFolder ? "—" : formatSize(file.sizeBytes)}
+                      <td className="px-4 py-3.5 text-slate-500 text-xs font-mono">
+                        {formatSize(file.sizeBytes)}
                       </td>
 
                       <td className="px-4 py-3.5 text-slate-500 text-xs">
                         {file.isFolder ? (
-                          "—"
+                          <span className="inline-flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 text-[11px] text-amber-800 font-medium">
+                            <Folder className="w-3 h-3 text-amber-600" />
+                            {file.totalItems || 0} {file.totalItems === 1 ? "item" : "items"}
+                          </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 text-[11px] text-slate-700 font-medium">
                             <Layers className="w-3 h-3 text-slate-500" />

@@ -270,6 +270,33 @@ app.post("/api/nodes/:id/failover-test", async (req: Request, res: Response) => 
   }
 });
 
+// Recursive folder statistics helper (sums contained file sizes, item count, and chunk count)
+async function calculateFolderStats(folderId: string) {
+  let totalBytes = 0;
+  let totalFiles = 0;
+  let totalChunks = 0;
+
+  async function calculateRecursive(fId: string) {
+    const children = await db.file.findMany({
+      where: { parentFolderId: fId, status: { not: "DELETED" } },
+      include: { _count: { select: { chunks: true } } },
+    });
+
+    for (const child of children) {
+      if (child.isFolder) {
+        await calculateRecursive(child.id);
+      } else {
+        totalBytes += child.sizeBytes;
+        totalFiles += 1;
+        totalChunks += child._count.chunks;
+      }
+    }
+  }
+
+  await calculateRecursive(folderId);
+  return { totalBytes, totalFiles, totalChunks };
+}
+
 // --- FILE METADATA & FOLDERS ---
 app.get("/api/files", async (req: Request, res: Response) => {
   try {
@@ -284,7 +311,26 @@ app.get("/api/files", async (req: Request, res: Response) => {
       },
       orderBy: [{ isFolder: "desc" }, { name: "asc" }],
     });
-    res.json(files);
+
+    const enrichedFiles = await Promise.all(
+      files.map(async (file) => {
+        if (file.isFolder) {
+          const stats = await calculateFolderStats(file.id);
+          return {
+            ...file,
+            sizeBytes: stats.totalBytes,
+            totalItems: stats.totalFiles,
+            totalChunks: stats.totalChunks,
+          };
+        }
+        return {
+          ...file,
+          totalChunks: file._count.chunks,
+        };
+      })
+    );
+
+    res.json(enrichedFiles);
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
   }
