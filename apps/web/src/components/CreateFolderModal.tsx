@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FolderPlus, X, AlertCircle } from "lucide-react";
 
 interface CreateFolderModalProps {
@@ -18,7 +18,23 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Clear state whenever modal open status changes
+  useEffect(() => {
+    if (isOpen) {
+      setFolderName("");
+      setError(null);
+      setIsSubmitting(false);
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
+
+  const resetStateAndClose = () => {
+    setFolderName("");
+    setError(null);
+    setIsSubmitting(false);
+    onClose();
+  };
 
   const validateFolderName = (name: string): string | null => {
     const trimmed = name.trim();
@@ -32,6 +48,9 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
     const invalidChars = /[\\/:\*\?"<>\|]/;
     if (invalidChars.test(trimmed)) {
       return 'Folder name cannot contain special characters: \\ / : * ? " < > |';
+    }
+    if (trimmed === "." || trimmed === "..") {
+      return "Folder name cannot be '.' or '..'";
     }
     return null;
   };
@@ -56,8 +75,7 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
     setIsSubmitting(true);
     try {
       await onSubmit(folderName.trim());
-      setFolderName("");
-      onClose();
+      resetStateAndClose();
     } catch (err) {
       setError((err as Error).message || "Failed to create folder.");
     } finally {
@@ -77,7 +95,7 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
           </div>
           <button
             type="button"
-            onClick={onClose}
+            onClick={resetStateAndClose}
             className="text-slate-400 hover:text-slate-700 transition-colors p-1"
           >
             <X className="w-4 h-4" />
@@ -112,7 +130,7 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
           <div className="flex justify-end gap-2 pt-2">
             <button
               type="button"
-              onClick={onClose}
+              onClick={resetStateAndClose}
               disabled={isSubmitting}
               className="min-btn-secondary py-1.5 text-xs font-semibold"
             >
@@ -131,3 +149,4 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
     </div>
   );
 };
+

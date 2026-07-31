@@ -10,6 +10,8 @@ import {
   NodeStatus,
   FileStatus,
   HEARTBEAT_INTERVAL_MS,
+  MAX_FILE_SIZE_BYTES,
+  validateFileUpload,
 } from "@clouddfs/shared";
 import { HeartbeatMonitor } from "./services/HeartbeatMonitor.js";
 import { ChunkManager } from "./services/ChunkManager.js";
@@ -29,9 +31,9 @@ const COORDINATOR_URL = getArg("coordinator-url", "http://localhost:4000");
 
 const app = express();
 app.use(cors());
-app.use(express.json({ limit: "50mb" }));
+app.use(express.json({ limit: "25mb" }));
 
-const upload = multer({ limits: { fileSize: 50 * 1024 * 1024 } }); // 50MB per chunk limit
+const upload = multer({ limits: { fileSize: 25 * 1024 * 1024 } }); // 25MB per chunk limit
 
 const storageProvider = new CloudStorageProvider();
 const chunkManager = new ChunkManager();
@@ -349,11 +351,9 @@ app.post("/api/files/upload/initiate", async (req: Request, res: Response) => {
   try {
     const payload = UploadInitiateSchema.parse(req.body);
 
-    const MAX_DEMO_FILE_SIZE_BYTES = 25 * 1024 * 1024; // 25MB limit for public demo safety
-    if (payload.sizeBytes > MAX_DEMO_FILE_SIZE_BYTES) {
-      return res.status(400).json({
-        error: "File size exceeds public demo safety limit of 25 MB.",
-      });
+    const check = validateFileUpload(payload.filename, payload.sizeBytes, payload.mimeType);
+    if (!check.valid) {
+      return res.status(400).json({ error: check.error || "File upload blocked for security." });
     }
 
     const file = await db.file.create({
@@ -485,8 +485,11 @@ app.get("/api/files/:id/download", async (req: Request, res: Response) => {
 
     const completeFileBuffer = Buffer.concat(chunkBuffers);
 
-    res.setHeader("Content-Type", file.mimeType || "application/octet-stream");
-    res.setHeader("Content-Disposition", `attachment; filename="${file.name}"`);
+    const safeFilename = file.name.replace(/["\r\n]/g, "_");
+    res.setHeader("Content-Type", "application/octet-stream"); // Force binary stream to avoid inline execution
+    res.setHeader("Content-Disposition", `attachment; filename="${safeFilename}"`);
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("Content-Security-Policy", "default-src 'none'; sandbox");
     res.setHeader("Content-Length", completeFileBuffer.length);
     res.send(completeFileBuffer);
   } catch (err) {

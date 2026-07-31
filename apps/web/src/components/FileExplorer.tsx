@@ -19,6 +19,7 @@ import {
 import { useToast } from "@/components/Toast";
 import { CreateFolderModal } from "@/components/CreateFolderModal";
 import { ConfirmModal } from "@/components/ConfirmModal";
+import { validateFileUpload } from "@clouddfs/shared";
 
 interface FileItem {
   id: string;
@@ -100,6 +101,18 @@ export const FileExplorer: React.FC = () => {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
+
+    // Validate size (max 20MB) and safety (block executable / script / phishing formats)
+    const validation = validateFileUpload(
+      selectedFile.name,
+      selectedFile.size,
+      selectedFile.type
+    );
+    if (!validation.valid) {
+      showToast("error", validation.error || "Upload blocked for security.");
+      e.target.value = "";
+      return;
+    }
 
     setIsUploading(true);
     setUploadProgress(0);
