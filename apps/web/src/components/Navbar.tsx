@@ -75,20 +75,16 @@ export const Navbar: React.FC = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition-transform active:scale-95 shrink-0"
-                title="View Source Code on GitHub"
               >
                 <Github className="w-4 h-4 text-white" />
-                <span>GitHub Repo</span>
               </a>
 
               {/* Admin Private Analytics Modal Trigger */}
               <button
                 onClick={() => setAnalyticsModalOpen(true)}
                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 text-xs font-semibold transition-transform active:scale-95 shrink-0"
-                title="Protected Admin Visitor Telemetry"
               >
                 <Lock className="w-3.5 h-3.5 text-amber-600" />
-                <span>Visitor Stats</span>
               </button>
             </div>
 
@@ -190,7 +186,6 @@ export const Navbar: React.FC = () => {
                 className="flex items-center justify-center gap-2 py-3 rounded-xl bg-slate-900 text-white text-xs font-bold shadow-xs active:scale-95 transition-transform"
               >
                 <Github className="w-4 h-4 text-white" />
-                <span>GitHub</span>
               </a>
 
               <button
@@ -201,7 +196,6 @@ export const Navbar: React.FC = () => {
                 className="flex items-center justify-center gap-2 py-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold active:scale-95 transition-transform"
               >
                 <Lock className="w-4 h-4 text-amber-600" />
-                <span>Admin Stats</span>
               </button>
             </div>
 
