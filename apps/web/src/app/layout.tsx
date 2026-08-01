@@ -8,6 +8,11 @@ export const metadata: Metadata = {
   title: "CloudDFS | Fault-Tolerant Distributed Storage",
   description:
     "A production-grade distributed file system built with TypeScript, Node.js, and Cloudflare R2 / AWS S3 backend.",
+  icons: {
+    icon: "/icon.svg",
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
+  },
 };
 
 export default function RootLayout({
