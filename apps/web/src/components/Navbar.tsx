@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { HardDrive, Server, Cloud, Cpu, Menu, X, ChevronRight, Github, Lock, ShieldCheck } from "lucide-react";
+import { HardDrive, Server, Menu, X, ChevronRight, Github, Lock } from "lucide-react";
 import { AdminVisitorModal } from "@/components/AdminVisitorModal";
 
 export const Navbar: React.FC = () => {
@@ -66,29 +66,31 @@ export const Navbar: React.FC = () => {
             </Link>
           </nav>
 
-          {/* Right Action Buttons */}
+          {/* Right Action Buttons (Desktop / Tablet only) */}
           <div className="flex items-center gap-2">
-            {/* GitHub Repository Link Button */}
-            <a
-              href="https://github.com/parixitsoni/CloudDFS"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition-transform active:scale-95 shrink-0"
-              title="View Source Code on GitHub"
-            >
-              <Github className="w-4 h-4 text-white" />
-              <span className="hidden sm:inline">GitHub Repo</span>
-            </a>
+            <div className="hidden sm:flex items-center gap-2">
+              {/* GitHub Repository Link Button */}
+              <a
+                href="https://github.com/parixitsoni/CloudDFS"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition-transform active:scale-95 shrink-0"
+                title="View Source Code on GitHub"
+              >
+                <Github className="w-4 h-4 text-white" />
+                <span>GitHub Repo</span>
+              </a>
 
-            {/* Admin Private Analytics Modal Trigger */}
-            <button
-              onClick={() => setAnalyticsModalOpen(true)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 text-xs font-semibold transition-transform active:scale-95 shrink-0"
-              title="Protected Admin Visitor Telemetry"
-            >
-              <Lock className="w-3.5 h-3.5 text-amber-600" />
-              <span className="hidden lg:inline">Visitor Stats</span>
-            </button>
+              {/* Admin Private Analytics Modal Trigger */}
+              <button
+                onClick={() => setAnalyticsModalOpen(true)}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 text-xs font-semibold transition-transform active:scale-95 shrink-0"
+                title="Protected Admin Visitor Telemetry"
+              >
+                <Lock className="w-3.5 h-3.5 text-amber-600" />
+                <span>Visitor Stats</span>
+              </button>
+            </div>
 
             {/* Mobile Menu Toggle Button */}
             <button
@@ -175,34 +177,31 @@ export const Navbar: React.FC = () => {
                 </div>
                 <ChevronRight className="w-5 h-5 opacity-60" />
               </Link>
+            </div>
+          </div>
 
+          {/* Overlay Footer Action Grid (GitHub & Admin Lock together) */}
+          <div className="space-y-4 pt-6 border-t border-slate-200 mt-6">
+            <div className="grid grid-cols-2 gap-3">
               <a
                 href="https://github.com/parixitsoni/CloudDFS"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-between p-4 rounded-2xl text-base font-bold bg-slate-900 text-white shadow-md"
+                className="flex items-center justify-center gap-2 py-3 rounded-xl bg-slate-900 text-white text-xs font-bold shadow-xs active:scale-95 transition-transform"
               >
-                <div className="flex items-center gap-3">
-                  <Github className="w-5 h-5" />
-                  <span>GitHub Repository</span>
-                </div>
-                <ChevronRight className="w-5 h-5 opacity-60" />
+                <Github className="w-4 h-4 text-white" />
+                <span>GitHub</span>
               </a>
-            </div>
-          </div>
 
-          {/* Overlay Footer Telemetry */}
-          <div className="space-y-4 pt-6 border-t border-slate-200 mt-6">
-            <div className="flex items-center justify-between">
               <button
                 onClick={() => {
                   setMobileMenuOpen(false);
                   setAnalyticsModalOpen(true);
                 }}
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold"
+                className="flex items-center justify-center gap-2 py-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold active:scale-95 transition-transform"
               >
                 <Lock className="w-4 h-4 text-amber-600" />
-                <span>Protected Admin Visitor Analytics</span>
+                <span>Admin Stats</span>
               </button>
             </div>
 
