@@ -561,7 +561,7 @@ interface AnalyticsEntry {
 }
 
 const analyticsLog: AnalyticsEntry[] = [];
-const ADMIN_SECRET_PASSKEY = process.env.ADMIN_SECRET_KEY || "parixit2026";
+const ADMIN_SECRET_PASSKEY = process.env.ADMIN_SECRET_KEY;
 
 function parseUserAgent(ua: string) {
   let browser = "Unknown Browser";
@@ -631,7 +631,7 @@ app.post("/api/analytics/track", (req: Request, res: Response) => {
 app.get("/api/analytics/stats", (req: Request, res: Response) => {
   const secretKey = (req.headers["x-admin-secret"] as string) || (req.query.secretKey as string);
   
-  if (secretKey !== ADMIN_SECRET_PASSKEY) {
+  if (!ADMIN_SECRET_PASSKEY || secretKey !== ADMIN_SECRET_PASSKEY) {
     return res.status(403).json({ error: "Access Denied: Invalid Admin Secret Passkey." });
   }
 
