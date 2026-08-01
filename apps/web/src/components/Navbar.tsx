@@ -3,12 +3,14 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { HardDrive, Server, Cloud, Cpu, Menu, X, ChevronRight } from "lucide-react";
+import { HardDrive, Server, Cloud, Cpu, Menu, X, ChevronRight, Github, Lock, ShieldCheck } from "lucide-react";
+import { AdminVisitorModal } from "@/components/AdminVisitorModal";
 
 export const Navbar: React.FC = () => {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [analyticsModalOpen, setAnalyticsModalOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -64,27 +66,39 @@ export const Navbar: React.FC = () => {
             </Link>
           </nav>
 
-          {/* Desktop Badges */}
-          <div className="hidden lg:flex items-center gap-3 text-xs">
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 font-medium">
-              <Cloud className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Object Storage Active</span>
-            </div>
+          {/* Right Action Buttons */}
+          <div className="flex items-center gap-2">
+            {/* GitHub Repository Link Button */}
+            <a
+              href="https://github.com/parixitsoni/CloudDFS"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition-transform active:scale-95 shrink-0"
+              title="View Source Code on GitHub"
+            >
+              <Github className="w-4 h-4 text-white" />
+              <span className="hidden sm:inline">GitHub Repo</span>
+            </a>
 
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 border border-slate-200 text-slate-700 font-medium">
-              <Cpu className="w-3.5 h-3.5 text-slate-600" />
-              <span>N=2 Replication</span>
-            </div>
+            {/* Admin Private Analytics Modal Trigger */}
+            <button
+              onClick={() => setAnalyticsModalOpen(true)}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 text-xs font-semibold transition-transform active:scale-95 shrink-0"
+              title="Protected Admin Visitor Telemetry"
+            >
+              <Lock className="w-3.5 h-3.5 text-amber-600" />
+              <span className="hidden lg:inline">Visitor Stats</span>
+            </button>
+
+            {/* Mobile Menu Toggle Button */}
+            <button
+              onClick={() => setMobileMenuOpen(true)}
+              className="md:hidden p-2 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 hover:text-slate-900 active:scale-95 transition-transform"
+              aria-label="Open Navigation Menu"
+            >
+              <Menu className="w-5 h-5 text-slate-900" />
+            </button>
           </div>
-
-          {/* Mobile Menu Toggle Button */}
-          <button
-            onClick={() => setMobileMenuOpen(true)}
-            className="md:hidden p-2 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 hover:text-slate-900 active:scale-95 transition-transform"
-            aria-label="Open Navigation Menu"
-          >
-            <Menu className="w-5 h-5 text-slate-900" />
-          </button>
         </div>
       </header>
 
@@ -161,32 +175,49 @@ export const Navbar: React.FC = () => {
                 </div>
                 <ChevronRight className="w-5 h-5 opacity-60" />
               </Link>
+
+              <a
+                href="https://github.com/parixitsoni/CloudDFS"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between p-4 rounded-2xl text-base font-bold bg-slate-900 text-white shadow-md"
+              >
+                <div className="flex items-center gap-3">
+                  <Github className="w-5 h-5" />
+                  <span>GitHub Repository</span>
+                </div>
+                <ChevronRight className="w-5 h-5 opacity-60" />
+              </a>
             </div>
           </div>
 
           {/* Overlay Footer Telemetry */}
           <div className="space-y-4 pt-6 border-t border-slate-200 mt-6">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400 px-1">
-              Cluster Telemetry
-            </p>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 font-medium text-xs justify-center">
-                <Cloud className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>Object Storage</span>
-              </div>
-              <div className="flex items-center gap-2 p-3 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 font-medium text-xs justify-center">
-                <Cpu className="w-4 h-4 text-slate-600 shrink-0" />
-                <span>N=2 Replication</span>
-              </div>
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  setAnalyticsModalOpen(true);
+                }}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold"
+              >
+                <Lock className="w-4 h-4 text-amber-600" />
+                <span>Protected Admin Visitor Analytics</span>
+              </button>
             </div>
 
-            <p className="text-center text-xs text-slate-400 pt-2 font-mono">
+            <p className="text-center text-xs text-slate-400 font-mono">
               CloudDFS System v1.0
             </p>
           </div>
         </div>
       )}
+
+      {/* Admin Visitor Telemetry Modal */}
+      <AdminVisitorModal
+        isOpen={analyticsModalOpen}
+        onClose={() => setAnalyticsModalOpen(false)}
+      />
     </>
   );
 };

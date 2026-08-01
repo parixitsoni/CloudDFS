@@ -544,6 +544,110 @@ app.get("/api/files/:id/download", async (req: Request, res: Response) => {
   }
 });
 
+// --- SECURE VISITOR ANALYTICS TELEMETRY ---
+interface AnalyticsEntry {
+  id: string;
+  ip: string;
+  country: string;
+  region: string;
+  city: string;
+  userAgent: string;
+  browser: string;
+  os: string;
+  deviceType: string;
+  durationSeconds: number;
+  pagePath: string;
+  createdAt: string;
+}
+
+const analyticsLog: AnalyticsEntry[] = [];
+const ADMIN_SECRET_PASSKEY = process.env.ADMIN_SECRET_KEY || "parixit2026";
+
+function parseUserAgent(ua: string) {
+  let browser = "Unknown Browser";
+  let os = "Unknown OS";
+  let deviceType = "Desktop";
+
+  if (/mobile/i.test(ua)) deviceType = "Mobile";
+  else if (/tablet|ipad/i.test(ua)) deviceType = "Tablet";
+
+  if (/chrome|crios/i.test(ua) && !/edg/i.test(ua)) browser = "Chrome";
+  else if (/safari/i.test(ua) && !/chrome/i.test(ua)) browser = "Safari";
+  else if (/firefox|fxios/i.test(ua)) browser = "Firefox";
+  else if (/edg/i.test(ua)) browser = "Edge";
+  else if (/opera|opr/i.test(ua)) browser = "Opera";
+
+  if (/windows/i.test(ua)) os = "Windows";
+  else if (/macintosh|mac os x/i.test(ua)) os = "macOS";
+  else if (/android/i.test(ua)) os = "Android";
+  else if (/iphone|ipad|ipod/i.test(ua)) os = "iOS";
+  else if (/linux/i.test(ua)) os = "Linux";
+
+  return { browser, os, deviceType };
+}
+
+app.post("/api/analytics/track", (req: Request, res: Response) => {
+  try {
+    const rawIp = (req.headers["x-forwarded-for"] as string || req.socket.remoteAddress || "127.0.0.1").split(",")[0].trim();
+    const userAgent = req.headers["user-agent"] || req.body.userAgent || "Unknown";
+    const { browser, os, deviceType } = parseUserAgent(userAgent);
+
+    const country = (req.headers["cf-ipcountry"] as string) || req.body.country || "India (IN)";
+    const region = req.body.region || "Rajasthan";
+    const city = req.body.city || "Udaipur";
+    const durationSeconds = Number(req.body.durationSeconds) || 0;
+    const pagePath = req.body.pagePath || "/";
+
+    const existingIndex = analyticsLog.findIndex((entry) => entry.ip === rawIp && entry.pagePath === pagePath);
+
+    if (existingIndex !== -1 && durationSeconds > 0) {
+      analyticsLog[existingIndex].durationSeconds = Math.max(analyticsLog[existingIndex].durationSeconds, durationSeconds);
+      analyticsLog[existingIndex].createdAt = new Date().toISOString();
+    } else {
+      analyticsLog.unshift({
+        id: `vis_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+        ip: rawIp,
+        country,
+        region,
+        city,
+        userAgent,
+        browser,
+        os,
+        deviceType,
+        durationSeconds,
+        pagePath,
+        createdAt: new Date().toISOString(),
+      });
+      if (analyticsLog.length > 500) analyticsLog.pop();
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
+
+// Protected endpoint to retrieve analytics (ADMIN ONLY)
+app.get("/api/analytics/stats", (req: Request, res: Response) => {
+  const secretKey = (req.headers["x-admin-secret"] as string) || (req.query.secretKey as string);
+  
+  if (secretKey !== ADMIN_SECRET_PASSKEY) {
+    return res.status(403).json({ error: "Access Denied: Invalid Admin Secret Passkey." });
+  }
+
+  const totalVisitors = analyticsLog.length;
+  const uniqueIPs = new Set(analyticsLog.map((l) => l.ip));
+  const totalDuration = analyticsLog.reduce((acc, l) => acc + l.durationSeconds, 0);
+  const avgDuration = totalVisitors > 0 ? Math.round(totalDuration / totalVisitors) : 0;
+
+  res.json({
+    totalVisitors,
+    uniqueVisitors: uniqueIPs.size,
+    averageDurationSeconds: avgDuration,
+    logs: analyticsLog,
+  });
+});
+
 // --- AUDIT LOGS ---
 app.get("/api/audit-logs", async (req: Request, res: Response) => {
   try {
