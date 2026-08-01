@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { HardDrive, Server, Menu, X, ChevronRight, Github, Lock } from "lucide-react";
+import { HardDrive, Server, Menu, X, ChevronRight, Github, Lock, Cloud } from "lucide-react";
 import { AdminVisitorModal } from "@/components/AdminVisitorModal";
 
 export const Navbar: React.FC = () => {
@@ -24,7 +24,7 @@ export const Navbar: React.FC = () => {
           {/* Brand Logo */}
           <Link href="/" className="flex items-center gap-2.5 group shrink-0">
             <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-white shadow-sm group-hover:scale-105 transition-transform duration-200">
-              <HardDrive className="w-4 h-4 text-white" />
+              <Server className="w-4.5 h-4.5 text-emerald-400" />
             </div>
             <div>
               <div className="flex items-center gap-1.5">
@@ -116,7 +116,7 @@ export const Navbar: React.FC = () => {
                 className="flex items-center gap-3"
               >
                 <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-white shadow-sm">
-                  <HardDrive className="w-5 h-5 text-white" />
+                  <Server className="w-5 h-5 text-emerald-400" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">

@@ -372,18 +372,18 @@ export const ClusterDashboard: React.FC = () => {
                     : "border-slate-200"
                 }`}
               >
-                <div className="flex items-start justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
                   <div>
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-bold text-slate-900 text-base">{node.name}</h4>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <h4 className="font-bold text-slate-900 text-sm sm:text-base">{node.name}</h4>
                       <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
                         {node.id}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-500 font-mono mt-0.5">{node.address}</p>
+                    <p className="text-xs text-slate-500 font-mono mt-0.5 break-all">{node.address}</p>
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2 self-start shrink-0">
                     <span
                       className={`min-badge ${
                         isDead
@@ -433,7 +433,7 @@ export const ClusterDashboard: React.FC = () => {
                 </div>
 
                 {/* Chaos Engineering Toggle Button Row */}
-                <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-2 border-t border-slate-100">
                   <span className="text-[11px] text-slate-400 font-mono flex items-center gap-1">
                     <Clock className="w-3 h-3 text-slate-400" /> Heartbeat:{" "}
                     {new Date(node.lastHeartbeat).toLocaleTimeString()}
@@ -442,7 +442,7 @@ export const ClusterDashboard: React.FC = () => {
                   <button
                     onClick={() => handleSimulateFailover(node.id, node.status)}
                     disabled={actionLoadingId === node.id}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+                    className={`w-full sm:w-auto px-3 py-2 sm:py-1.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${
                       isDead
                         ? "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100"
                         : "bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100"
@@ -466,7 +466,7 @@ export const ClusterDashboard: React.FC = () => {
 
       {/* Audit Log Trail */}
       <div className="white-panel p-4 sm:p-5 space-y-3 border-slate-200">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 border-b border-slate-100 pb-3">
           <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2">
             <Clock className="w-4 h-4 text-slate-700" /> System Event Audit Trail
           </h3>
