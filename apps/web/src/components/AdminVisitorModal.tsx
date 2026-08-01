@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import {
-  ShieldCheck,
   Lock,
   X,
   Users,
@@ -111,13 +110,17 @@ export const AdminVisitorModal: React.FC<Props> = ({ isOpen, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div
+        className={`relative w-full ${
+          isAuthenticated ? "max-w-4xl" : "max-w-md"
+        } bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh] transition-all duration-300`}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-slate-50">
+        <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-slate-50 shrink-0">
           <div className="flex items-center gap-2">
             <Lock className="w-4 h-4 text-slate-900" />
-            <h3 className="text-base font-bold text-slate-900">
+            <h3 className="text-sm sm:text-base font-bold text-slate-900">
               {isAuthenticated ? "Private Visitor Analytics" : "Admin Access"}
             </h3>
           </div>
@@ -176,9 +179,9 @@ export const AdminVisitorModal: React.FC<Props> = ({ isOpen, onClose }) => {
           </form>
         ) : (
           /* Authenticated Dashboard View */
-          <div className="p-4 sm:p-6 space-y-5 overflow-y-auto max-h-[80vh] w-full max-w-4xl">
+          <div className="p-3 sm:p-6 space-y-5 overflow-y-auto w-full">
             {/* Top Metric Cards */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="white-panel p-3 space-y-1 border-slate-200 bg-slate-50/50">
                 <div className="flex items-center justify-between text-slate-500 text-[10px] font-bold uppercase tracking-wider">
                   <span>Total Visits</span>
@@ -220,10 +223,52 @@ export const AdminVisitorModal: React.FC<Props> = ({ isOpen, onClose }) => {
               </button>
             </div>
 
-            {/* Visitor Log Table */}
-            <div className="white-panel overflow-hidden border-slate-200">
+            {/* MOBILE CARD VIEW (< 640px) */}
+            <div className="block sm:hidden space-y-3">
+              {stats?.logs.length === 0 ? (
+                <p className="text-center py-6 text-slate-400 text-xs">No visitor logs recorded yet.</p>
+              ) : (
+                stats?.logs.map((log) => (
+                  <div
+                    key={log.id}
+                    className="white-panel p-3 space-y-2 border-slate-200 text-xs text-slate-800"
+                  >
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+                      <span className="font-mono font-bold text-slate-900 text-xs">{log.ip}</span>
+                      <span className="font-mono text-[10px] text-slate-400">
+                        {new Date(log.createdAt).toLocaleTimeString()}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-slate-600 text-[11px]">
+                      <div className="flex items-center gap-1">
+                        <Globe className="w-3 h-3 text-slate-400" />
+                        <span>{log.city}, {log.region}, {log.country}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between text-[11px]">
+                      <div className="flex items-center gap-1">
+                        {log.deviceType === "Mobile" ? (
+                          <Smartphone className="w-3 h-3 text-slate-500" />
+                        ) : (
+                          <Laptop className="w-3 h-3 text-slate-500" />
+                        )}
+                        <span>{log.os} / {log.browser}</span>
+                      </div>
+                      <span className="font-semibold text-emerald-700">
+                        {formatDuration(log.durationSeconds)}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* DESKTOP TABLE VIEW (≥ 640px) */}
+            <div className="hidden sm:block white-panel overflow-hidden border-slate-200">
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
+                <table className="w-full text-left text-xs min-w-[640px]">
                   <thead className="bg-slate-100 text-slate-600 font-bold uppercase tracking-wider border-b border-slate-200 text-[10px]">
                     <tr>
                       <th className="px-3 py-2">Timestamp</th>
